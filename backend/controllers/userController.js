@@ -1,5 +1,5 @@
-import User from "../model/User";
-import UserPreferences from "../model/UserPreferences";
+import User from "../model/User.js";
+import UserPreferences from "../model/UserPreferences.js";
 
 /**
  * Get user profile

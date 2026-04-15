@@ -4,6 +4,11 @@ import cors from "cors";
 dotenv.config();
 
 
+// Import routes
+import authRoutes from './routes/auth.js'; 
+import userRoutes from './routes/users.js';
+
+
 const app = express();
 
 const PORT = process.env.PORT || 8000;
@@ -15,6 +20,11 @@ app.use(express.urlencoded({extended:true}));
 // app.get("/", async (req, res) => { 
 //   res.send("Recipee app");
 // });
+
+
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users',userRoutes);
 
 
 app.listen(PORT, () => {
