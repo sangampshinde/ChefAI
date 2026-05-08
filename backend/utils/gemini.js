@@ -1,0 +1,125 @@
+import dotenv from 'dotenv'
+import { GoogleGenAI } from '@google/genai';
+
+dotenv.config();
+
+
+// Initialize AI
+const ai = new GoogleGenAI(process.env.GEMINI_API_KEY);
+
+
+// Warn if API key missing
+if (!process.env.GEMINI_API_KEY) {
+  console.error('WARNING: GEMINI_API_KEY is not set. AI features will not work.');
+}
+
+
+export const generateRecipe = async ({
+  ingredients,
+  dietaryRestrictions = [],
+  cuisineType = 'any',
+  servings = 4,
+  cookingTime = 'medium'
+}) => {
+
+
+    const dietaryInfo =
+  dietaryRestrictions.length > 0
+    ? `Dietary restrictions: ${dietaryRestrictions.join(', ')}`
+    : 'No dietary restrictions';
+
+    const timeGuide = {
+  quick: 'under 30 minutes',
+  medium: '30-60 minutes',
+  long: 'over 60 minutes'
+};
+
+
+const prompt = `Generate a detailed recipe with the following requirements:
+
+Ingredients available: ${ingredients.join(', ')}
+${dietaryInfo}
+Cuisine type: ${cuisineType}
+Servings: ${servings}
+Cooking time: ${timeGuide[cookingTime] || 'any'}
+
+Please provide a complete recipe in the following JSON format.
+Return ONLY valid JSON (no markdown, no explanation):
+
+{
+  "name": "Recipe name",
+  "description": "Brief description of the dish",
+  "cuisineType": "${cuisineType}",
+  "difficulty": "easy | medium | hard",
+  "prepTime": number,
+  "cookTime": number,
+  "servings": ${servings},
+  "ingredients": [
+    {
+      "name": "ingredient name",
+      "quantity": number,
+      "unit": "unit of measurement"
+    }
+  ],
+  "instructions": [
+    "Step 1 description",
+    "Step 2 description"
+  ],
+  "dietaryTags": ["vegetarian", "gluten-free"],
+  "nutrition": {
+    "calories": number,
+    "protein": number,
+    "carbs": number,
+    "fats": number,
+    "fiber": number
+  },
+  "cookingTips": [
+    "Tip 1",
+    "Tip 2"
+  ]
+}
+
+Make sure the recipe is creative, delicious, and uses the provided ingredients effectively.`;
+
+
+try {
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: [{ role: "user", parts: [{ text: prompt }] }]
+  });
+
+  const generatedText = response.text.trim();
+
+  // Remove markdown code blocks if present
+  let jsonText = generatedText;
+
+  if (jsonText.startsWith("```json")) {
+    jsonText = jsonText
+      .replace(/```json\n?/g, "")
+      .replace(/```\n?$/g, "");
+  } else if (jsonText.startsWith("```")) {
+    jsonText = jsonText
+      .replace(/```\n?/g, "")
+      .replace(/```\n?$/g, "");
+  }
+
+  // Parse JSON safely
+  let recipe;
+  try {
+    recipe = JSON.parse(jsonText);
+  } catch (parseError) {
+    console.error("Invalid JSON from AI:", jsonText);
+    throw new Error("AI returned invalid JSON");
+  }
+
+  return recipe;
+
+} catch (error) {
+  console.error("Gemini API error:", error);
+  throw new Error("Failed to generate recipe. Please try again.");
+}
+
+
+  
+};
+
