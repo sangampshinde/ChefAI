@@ -6,6 +6,7 @@ import MealPlan from '../model/MealPlan.js';
 export const addToMealPlan = async (req, res, next) => {
   try {
     const mealPlan = await MealPlan.create(req.user.id, req.body);
+    
 
     res.status(201).json({
       success: true,

@@ -7,42 +7,49 @@ import api from "../services/api";
 const CATEGORIES = ['Produce', 'Dairy', 'Meat', 'Grains', 'Spices', 'Beverages', 'Other'];
 
 const ShoppingList = () => {
+
     const [items, setItems] = useState([]);
     const [groupedItems, setGroupedItems] = useState({});
     const [showAddModal, setShowAddModal] = useState(false);
     const [loading, setLoading] = useState(true);
+
     useEffect(() => {
         fetchShoppingList();
     }, []);
 
-   const fetchShoppingList = async () => {
-  try {
-    const response = await api.get('/shopping-list?grouped=true');
+    const fetchShoppingList = async () => {
+    try {
+        const response = await api.get('/shopping-list?grouped=true');
+        console.log("RAW API RESPONSE:", response.data);
 
-    const grouped = response.data?.data?.items || [];
+        const grouped = response.data?.data?.items || [];
 
-    // Convert grouped format to flat array
-    const flatItems = [];
+        // Convert grouped format to flat array
+        const flatItems = [];
 
-    grouped.forEach((group) => {
-      group.items.forEach((item) => {
-        flatItems.push({
-          ...item,
-          category: group.category,
+        grouped.forEach((group) => {
+
+            console.log("group.items",group.items)
+
+
+        group.items.forEach((item) => {
+            flatItems.push({
+            ...item,
+            category: group.category || 'Other',
+            });
         });
-      });
-    });
+        });
 
-    setItems(flatItems);
-    organizeByCategory(flatItems);
+        setItems(flatItems);
+        organizeByCategory(flatItems);
 
-  } catch (error) {
-    toast.error('Failed to load shopping list');
-    console.error(error);
-  } finally {
-    setLoading(false);
-  }
-};
+    } catch (error) {
+        toast.error('Failed to load shopping list');
+        console.error(error);
+    } finally {
+        setLoading(false);
+    }
+    };
 
     const organizeByCategory = (itemsList) => {
         const grouped = {};
@@ -55,6 +62,8 @@ const ShoppingList = () => {
         });
         setGroupedItems(grouped);
     };
+
+    
 
    const handleToggleChecked = async (id) => {
   // UI optimistic update
@@ -235,12 +244,13 @@ const ShoppingList = () => {
                 <AddItemModal
                     onClose={() => setShowAddModal(false)}
                     onSuccess={(newItem) => {
-                        // Add to local state
+                        if (!newItem) return;
+
                         const updatedItems = [...items, newItem];
                         setItems(updatedItems);
                         organizeByCategory(updatedItems);
                         setShowAddModal(false);
-                    }}
+                        }}
                 />
             )}
         </div>
@@ -298,15 +308,21 @@ const AddItemModal = ({ onClose, onSuccess }) => {
 
   setLoading(true);
 
+  console.log("formData",formData)
+
   try {
-    await api.post('/shopping-list', {
+      const response = await api.post('/shopping-list', {
       ...formData,
       quantity: parseFloat(formData.quantity),
     });
 
+     const newItem = response.data?.data?.item; // ✅ IMPORTANT
+
+    console.log("newItem from API:", newItem);
+
     toast.success('Item added to shopping list');
 
-    onSuccess();
+    onSuccess(newItem);
     onClose();
   } catch (error) {
     toast.error('Failed to add item');

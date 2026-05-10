@@ -57,19 +57,18 @@ const MealPlanner = () => {
   }
 };
 
-    const loadMealPlan = () => {
-        // Organize dummy meals by date and meal type
-        const organized = {};
-        dummyMealPlans.forEach(meal => {
-            const dateKey = meal.meal_date;
-            if (!organized[dateKey]) {
-                organized[dateKey] = {};
-            }
-            organized[dateKey][meal.meal_type] = meal;
-        });
-        setMealPlan(organized);
-    };
 
+const fetchRecipes = async () => {
+  try {
+    const response = await api.get('/recipes');
+
+    setRecipes(response.data.data.recipes);
+  } catch (error) {
+    console.error('Failed to load recipes', error);
+  }
+};
+
+   
     const handleAddMeal = (date, mealType) => {
         setSelectedSlot({ date, mealType });
         setShowAddModal(true);
@@ -173,6 +172,7 @@ const MealPlanner = () => {
 
                     {/* Meal Rows */}
                     {MEAL_TYPES.map(mealType => (
+
                         <div key={mealType} className="grid grid-cols-8 border-b border-gray-200 last:border-b-0">
                             <div className="p-4 font-medium text-gray-700 capitalize border-r border-gray-200 bg-gray-50">
                                 {mealType}
@@ -248,24 +248,30 @@ const MealPlanner = () => {
                         setSelectedSlot(null);
                     }}
                     onSuccess={(newMeal) => {
+
+                        console.log("newMeal",newMeal)
                         // Add to local state
                         const updatedPlan = { ...mealPlan };
+                        console.log("updatedPlan",updatedPlan)
                         const date = selectedSlot.date;
                         if (!updatedPlan[date]) {
                             updatedPlan[date] = {};
                         }
                         updatedPlan[date][selectedSlot.mealType] = newMeal;
                         setMealPlan(updatedPlan);
+                        
                         setShowAddModal(false);
                         setSelectedSlot(null);
                     }}
+                    fetchRecipes={fetchRecipes}
                 />
             )}
         </div>
     );
 };
 
-const AddMealModal = ({ date, mealType, recipes, onClose, onSuccess }) => {
+const AddMealModal = ({ date, mealType, recipes, onClose, onSuccess,fetchRecipes }) => {
+
     const [selectedRecipe, setSelectedRecipe] = useState('');
     const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -285,14 +291,16 @@ const AddMealModal = ({ date, mealType, recipes, onClose, onSuccess }) => {
   setLoading(true);
 
   try {
-    await api.post('/meal-plans', {
-      recipe_id: selectedRecipe,
-      planned_date: date,
-      meal_type: mealType,
-    });
+    const response = await api.post('/meal-plans', {
+        recipe_id: selectedRecipe,
+        planned_date: date,
+        meal_type: mealType,
+        });
 
+    const newMeal = response.data?.data?.mealPlan; // ✅ correct key
     toast.success('Meal added to plan');
-    onSuccess();
+    await fetchRecipes();
+    onSuccess(newMeal);
   } catch (error) {
     toast.error('Failed to add meal');
     console.error(error);

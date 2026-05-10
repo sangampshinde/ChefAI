@@ -69,52 +69,108 @@ const Settings = () => {
   }
 };
 
-    const handleProfileUpdate = (e) => {
-        e.preventDefault();
-        // UI-only update
-        toast.success('Profile updated successfully');
-    };
+const handleProfileUpdate = async (e) => {
+  e.preventDefault();
+  setSaving(true);
 
-    const handlePreferencesUpdate = (e) => {
-        e.preventDefault();
-        // UI-only update
-        toast.success('Preferences updated successfully');
-    };
+  try {
+    await api.put('/users/profile', profile);
 
-    const handlePasswordChange = (e) => {
-        e.preventDefault();
+    toast.success('Profile updated successfully');
 
-        if (passwordData.newPassword !== passwordData.confirmPassword) {
-            toast.error('Passwords do not match');
-            return;
-        }
+    // Update local storage
+    const updatedUser = { ...user, ...profile };
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+  } catch (error) {
+    toast.error('Failed to update profile');
+    console.error(error);
+  } finally {
+    setSaving(false);
+  }
+};
 
-        if (passwordData.newPassword.length < 6) {
-            toast.error('Password must be at least 6 characters');
-            return;
-        }
+    const handlePreferencesUpdate = async (e) => {
+  e.preventDefault();
+  setSaving(true);
 
-        // UI-only password change
-        toast.success('Password changed successfully');
-        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    };
+  try {
+    await api.put('/users/preferences', preferences);
 
-    const handleDeleteAccount = () => {
-        if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-            return;
-        }
+    toast.success('Preferences updated successfully');
+  } catch (error) {
+    toast.error('Failed to update preferences');
+    console.error(error);
+  } finally {
+    setSaving(false);
+  }
+};
 
-        const confirmation = prompt('Type "DELETE" to confirm account deletion:');
-        if (confirmation !== 'DELETE') {
-            toast.error('Account deletion cancelled');
-            return;
-        }
+    const handlePasswordChange = async (e) => {
+  e.preventDefault();
 
-        // UI-only delete
-        toast.success('Account deleted successfully');
-        logout();
-        navigate('/login');
-    };
+  if (passwordData.newPassword !== passwordData.confirmPassword) {
+    toast.error('Passwords do not match');
+    return;
+  }
+
+  if (passwordData.newPassword.length < 6) {
+    toast.error('Password must be at least 6 characters');
+    return;
+  }
+
+  setSaving(true);
+
+  try {
+    await api.put('/users/change-password', {
+      currentPassword: passwordData.currentPassword,
+      newPassword: passwordData.newPassword,
+    });
+
+    toast.success('Password changed successfully');
+
+    setPasswordData({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    });
+  } catch (error) {
+    toast.error(error.response?.data?.message || 'Failed to change password');
+    console.error(error);
+  } finally {
+    setSaving(false);
+  }
+};
+
+ const handleDeleteAccount = async () => {
+  if (
+    !confirm(
+      'Are you sure you want to delete your account? This action cannot be undone.'
+    )
+  ) {
+    return;
+  }
+
+  const confirmation = prompt(
+    'Type "DELETE" to confirm account deletion:'
+  );
+
+  if (confirmation !== 'DELETE') {
+    toast.error('Account deletion cancelled');
+    return;
+  }
+
+  try {
+    await api.delete('/users/account');
+
+    toast.success('Account deleted successfully');
+
+    logout(); // make sure correct function name
+    navigate('/login');
+  } catch (error) {
+    toast.error('Failed to delete account');
+    console.error(error);
+  }
+};
 
     const toggleDietary = (option) => {
         setPreferences(prev => ({
