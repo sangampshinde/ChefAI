@@ -143,7 +143,7 @@ static async getStats(userId) {
 
 }
 
-module.exports = PantryItem;
+export default PantryItem;
 
 
 

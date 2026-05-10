@@ -7,6 +7,9 @@ dotenv.config();
 // Import routes
 import authRoutes from './routes/auth.js'; 
 import userRoutes from './routes/users.js';
+import pantryRoutes from './routes/pantry.js';
+import mealPlanRoutes from './routes/mealPlans.js';
+
 
 
 const app = express();
