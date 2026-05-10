@@ -4,7 +4,7 @@ import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { dummyUser, dummyPreferences } from '../data/dummyData';
+import api from "../services/api";
 
 const DIETARY_OPTIONS = ['Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Keto', 'Paleo'];
 const CUISINES = ['Any', 'Italian', 'Mexican', 'Indian', 'Chinese', 'Japanese', 'Thai', 'French', 'Mediterranean', 'American'];
@@ -13,6 +13,7 @@ const Settings = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const [saving, setSaving] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     // Profile state
     const [profile, setProfile] = useState({
@@ -37,23 +38,36 @@ const Settings = () => {
     });
 
     useEffect(() => {
-        loadUserData();
+        fetchUserData();
     }, []);
 
-    const loadUserData = () => {
-        setProfile({
-            name: dummyUser.name,
-            email: dummyUser.email
-        });
+   const fetchUserData = async () => {
+  try {
+    const response = await api.get('/users/profile');
 
-        setPreferences({
-            dietary_restrictions: dummyPreferences.dietary_restrictions || [],
-            allergies: dummyPreferences.allergies || [],
-            preferred_cuisines: dummyPreferences.preferred_cuisines || [],
-            default_servings: dummyPreferences.default_servings || 4,
-            measurement_unit: dummyPreferences.measurement_unit || 'metric'
-        });
-    };
+    const { user, preferences: userPrefs } = response.data.data;
+
+    setProfile({
+      name: user.name,
+      email: user.email,
+    });
+
+    if (userPrefs) {
+      setPreferences({
+        dietary_restrictions: userPrefs.dietary_restrictions || [],
+        allergies: userPrefs.allergies || [],
+        preferred_cuisines: userPrefs.preferred_cuisines || [],
+        default_servings: userPrefs.default_servings || 4,
+        measurement_unit: userPrefs.measurement_unit || 'metric',
+      });
+    }
+  } catch (error) {
+    toast.error('Failed to load user data');
+    console.error(error);
+  } finally {
+    setLoading(false);
+  }
+};
 
     const handleProfileUpdate = (e) => {
         e.preventDefault();
