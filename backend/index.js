@@ -1,6 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import db from './config/db.js';
+
 dotenv.config();
 
 
@@ -9,7 +11,8 @@ import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import pantryRoutes from './routes/pantry.js';
 import mealPlanRoutes from './routes/mealPlans.js';
-
+import shoppingListRoutes from './routes/shoppingList.js';
+import recipeRoutes from './routes/recipes.js';
 
 
 const app = express();
@@ -28,6 +31,20 @@ app.use(express.urlencoded({extended:true}));
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users',userRoutes);
+app.use('/api/pantry', pantryRoutes);
+app.use('/api/recipes', recipeRoutes);
+app.use('/api/meal-plans', mealPlanRoutes);
+app.use('/api/shopping-list',shoppingListRoutes);
+
+
+
+try {
+  await db.query('SELECT 1');
+  console.log('✅ Database connected successfully');
+} catch (error) {
+  console.error('❌ Database connection failed');
+  console.error(error.message);
+}
 
 
 app.listen(PORT, () => {

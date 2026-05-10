@@ -3,9 +3,14 @@ import { GoogleGenAI } from '@google/genai';
 
 dotenv.config();
 
+// console.log("process.env.GEMINI_API_KEY",process.env.GEMINI_API_KEY)
+
+
 
 // Initialize AI
-const ai = new GoogleGenAI(process.env.GEMINI_API_KEY);
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
 
 
 // Warn if API key missing
