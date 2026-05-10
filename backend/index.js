@@ -19,7 +19,16 @@ const app = express();
 
 const PORT = process.env.PORT || 8000;
 
-app.use(cors());
+const allowedOrigins = [
+  "http://localhost:3000",
+  process.env.CLIENT_URL
+];
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 
@@ -38,13 +47,17 @@ app.use('/api/shopping-list',shoppingListRoutes);
 
 
 
-try {
-  await db.query('SELECT 1');
-  console.log('✅ Database connected successfully');
-} catch (error) {
-  console.error('❌ Database connection failed');
-  console.error(error.message);
-}
+const connectDB = async () => {
+  try {
+    await db.query('SELECT 1');
+    console.log('✅ Database connected successfully');
+  } catch (error) {
+    console.error('❌ Database connection failed');
+    console.error(error.message);
+  }
+};
+
+connectDB();
 
 
 app.listen(PORT, () => {
