@@ -42,3 +42,4 @@ AI Integration: Google gen ai
 - Well-structured normalized PostgreSQL schema
 ## 🎨 UI/UX
 - Fully responsive modern UI using Tailwind CSS
+
