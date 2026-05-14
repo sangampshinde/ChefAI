@@ -24,17 +24,27 @@ const allowedOrigins = [
   process.env.CLIENT_URL
 ];
 
+console.log("allowedOrigins",allowedOrigins)
+
 app.use(cors({
-  origin: allowedOrigins,
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    // allow exact + all Netlify preview subdomains
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.endsWith(".netlify.app")
+    ) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("Not allowed by CORS"));
+  },
   credentials: true
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
-
-// app.get("/", async (req, res) => { 
-//   res.send("Recipee app");
-// });
 
 
 // API Routes
